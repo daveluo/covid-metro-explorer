@@ -1,3 +1,7 @@
 [global]
 
 dataFrameSerialization = "legacy"
+
+[theme]
+
+base="light"
