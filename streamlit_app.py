@@ -1,5 +1,4 @@
 import pandas as pd
-import geopandas as gpd
 import streamlit as st
 import altair as alt
 import base64
