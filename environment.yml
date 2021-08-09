@@ -1,3 +1,5 @@
 name: streamlit
 channels:
   - defaults
+- pip:
+  - streamlit==0.86.0
