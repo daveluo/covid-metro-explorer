@@ -4,7 +4,7 @@ import altair as alt
 import base64
 alt.data_transformers.disable_max_rows()
 
-st.set_page_config(page_title="COVID Metro Areas Explorer",layout='wide')
+st.set_page_config(page_title="COVID Metro Areas Explorer",layout='centered')
 
 def _max_width_():
     max_width_str = f"max-width: 2000px;"
@@ -104,7 +104,7 @@ state_codes = {
 
 # selections
 select_cbsa = alt.selection_multi(name='cbsa', empty='none', nearest=True, fields=['cbsa'], init=cbsa_init)
-slider = alt.binding_range(min=0, max=source['timeslider'].max(), step=1, name='Select Week:')
+slider = alt.binding_range(min=0, max=source['timeslider'].max(), step=1, name=' ')
 select_date = alt.selection_single(name="timeslide", fields=['timeslider'], bind=slider, init={'timeslider':source['timeslider'].max()})
 
 # line plots
@@ -148,20 +148,20 @@ map_facility_base = alt.Chart(source).mark_point(filled=True).encode(
     longitude='lon',
     latitude='lat',
     color = alt.Color('admits_100k:Q', 
-                    legend=alt.Legend(orient='none', legendX=420, legendY=470, direction='horizontal', titleLimit=500, format='.0f'),
+                    legend=alt.Legend(orient='none', legendX=325, legendY=470, direction='horizontal', titleLimit=500, format='.0f'),
                     title='Weekly Admissions per 100k',
                     scale=alt.Scale(scheme='redyellowblue', domain=[0,50], type='quantile', reverse=True, clamp=True),
                     ), 
     size= alt.Size('admissions_covid_confirmed_last_7_days:Q', 
-                    title=['Weekly','Admissions'],
-                    legend=alt.Legend(orient='none', legendX=700, legendY=368, direction='vertical', titleLimit=500), scale=alt.Scale(domain=[0,2000], range=[10,500])
+                    title=['Weekly Admissions'],
+                    legend=alt.Legend(orient='none', legendX=660, legendY=470, direction='horizontal', titleLimit=500), scale=alt.Scale(domain=[0,2000], range=[10,500])
                     ),
     stroke=alt.condition(select_cbsa, alt.value('black'), alt.value('#111111')),
     strokeWidth=alt.condition(select_cbsa, alt.value(1.5), alt.value(0.5)),
     tooltip=['cbsa','report_date','hosp_timerange','total_population_2019','admissions_covid_confirmed_last_7_days','admits_100k',],
 ).transform_filter(alt.datum.state!='PR').add_selection(select_cbsa).add_selection(select_date).transform_filter(select_date)
 
-date_display = alt.Chart(source).mark_text(dy=250, dx=-150, size=18, stroke='white', strokeWidth=0.3).encode(
+date_display = alt.Chart(source).mark_text(dy=250, dx=-250, size=18, stroke='white', strokeWidth=0.3).encode(
     text='hosp_timerange:N'
 ).transform_filter(select_date).transform_filter(alt.datum.cbsa==cbsa_init[0]['cbsa'])
 
@@ -189,13 +189,14 @@ if selected_states != 'All USA':
 else: 
     viz_concat = (map_background+map_facility_base+date_display+map_text)
 
-maptime_viz = alt.vconcat(viz_concat.properties(height=450, width=750), 
+maptime_viz = alt.vconcat(viz_concat.properties(
+                        height=450, width=750), 
                         (legend_line+legend_points).interactive(bind_x=False).properties(width=300, height=250,)|
                         (legend_abs_line+legend_abs_points).interactive(bind_x=False).properties(width=300, height=250,)
                         ).properties( 
                             title=[f'{selected_states} Metro Areas - New COVID-19 Hospital Admission Trends by Week'],
-                            center=False,
-                        ).configure(padding={ 'top' : 0 }).configure_axis(
+                            center=True,
+                        ).configure_axis(
                             labelFontSize=14,
                             titleFontSize=14
                         ).configure_header(
@@ -213,7 +214,7 @@ st.markdown(f"""
 
         form.vega-bindings {{
             position: absolute;
-            left: 0px;
+            left: 30px;
             top: 510px;
             font-family: 'arial';
         }}
