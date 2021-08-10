@@ -75,11 +75,11 @@ st.sidebar.markdown(
 if selected_states != 'All USA': 
     source = source[source['state']==selected_states]
     cbsa_init = [{'cbsa':c} for c in source[(source['report_date']==source['report_date'].max())\
-                                            ].sort_values('admissions_covid_confirmed_last_7_days', ascending=False)['cbsa'].values[:8]]
+                                            ].sort_values('admissions_covid_confirmed_last_7_days', ascending=False)['cbsa'].values[:6]]
 else: 
     cbsa_init = [{'cbsa':c} for c in source[(source['report_date']==source['report_date'].max())\
                                             &(source['admissions_covid_confirmed_last_7_days']>1000)\
-                                            ].sort_values('admissions_covid_confirmed_last_7_days', ascending=False)['cbsa'].values[:4]]
+                                            ].sort_values('admissions_covid_confirmed_last_7_days', ascending=False)['cbsa'].values[:10]]
 
 @st.cache
 def get_counties_shapes():
@@ -115,7 +115,7 @@ legend_base = alt.Chart(source).encode(
 
 legend_points = legend_base.mark_point(shape='circle', filled=True, size=50, opacity=0.8).encode(
     y=alt.Y('admits_100k', title=None),
-    tooltip=['cbsa','report_date','hosp_timerange','admits_100k'],
+    tooltip=['cbsa','report_date','hosp_timerange','admits_100k','total_population_2019'],
     opacity = alt.condition(select_date, alt.value(0.8), alt.value(0.)),
 ).transform_filter(select_date
 ).transform_filter(select_cbsa)
@@ -127,7 +127,7 @@ legend_line = legend_base.mark_line().transform_filter(select_cbsa).encode(
 
 legend_abs_points = legend_base.mark_point(shape='circle', filled=True, size=50, opacity=0.8).encode(
     y=alt.Y('admissions_covid_confirmed_last_7_days', title=None),
-    tooltip=['cbsa','report_date','hosp_timerange','admissions_covid_confirmed_last_7_days'],
+    tooltip=['cbsa','report_date','hosp_timerange','admissions_covid_confirmed_last_7_days','total_population_2019'],
     opacity = alt.condition(select_date, alt.value(0.8), alt.value(0.)),
 ).transform_filter(select_date
 ).transform_filter(select_cbsa)
@@ -154,7 +154,7 @@ map_facility_base = alt.Chart(source).mark_point(filled=True).encode(
                     ), 
     size= alt.Size('admissions_covid_confirmed_last_7_days:Q', 
                     title=['Weekly','Admissions'],
-                    legend=alt.Legend(orient='none', legendX=700, legendY=350, direction='vertical', titleLimit=500), scale=alt.Scale(domain=[0,2000], range=[10,500])
+                    legend=alt.Legend(orient='none', legendX=700, legendY=368, direction='vertical', titleLimit=500), scale=alt.Scale(domain=[0,2000], range=[10,500])
                     ),
     stroke=alt.condition(select_cbsa, alt.value('black'), alt.value('#111111')),
     strokeWidth=alt.condition(select_cbsa, alt.value(1.5), alt.value(0.5)),
@@ -165,7 +165,7 @@ date_display = alt.Chart(source).mark_text(dy=250, dx=-150, size=18, stroke='whi
     text='hosp_timerange:N'
 ).transform_filter(select_date).transform_filter(alt.datum.cbsa==cbsa_init[0]['cbsa'])
 
-map_text = alt.Chart(source).mark_text(dy=-12, dx=0, size=14, opacity=1, color='#000', stroke='#fff', strokeWidth=0.3).encode(
+map_text = alt.Chart(source).mark_text(dy=-12, dx=0, size=12, opacity=1, color='#000', stroke='#fff', strokeWidth=0.).encode(
     longitude='lon',
     latitude='lat',
     text='cbsa_short'
@@ -189,9 +189,9 @@ if selected_states != 'All USA':
 else: 
     viz_concat = (map_background+map_facility_base+date_display+map_text)
 
-maptime_viz = alt.vconcat(viz_concat.properties(width=700, height=450), 
-                        (legend_line+legend_points).interactive(bind_x=False).properties(width=500, height=200,),
-                        (legend_abs_line+legend_abs_points).interactive(bind_x=False).properties(width=500, height=200,)
+maptime_viz = alt.vconcat(viz_concat.properties(height=450, width=750), 
+                        (legend_line+legend_points).interactive(bind_x=False).properties(width=300, height=250,)|
+                        (legend_abs_line+legend_abs_points).interactive(bind_x=False).properties(width=300, height=250,)
                         ).properties( 
                             title=[f'{selected_states} Metro Areas - New COVID-19 Hospital Admission Trends by Week'],
                             center=False,
