@@ -121,22 +121,22 @@ select_date = alt.selection_single(name="timeslide", fields=['timeslider'], bind
 legend_base = alt.Chart(source).encode(
     x=alt.X('report_date:T', axis=alt.Axis(orient='bottom',title='',labelAngle=0,), sort=alt.SortOrder('ascending'),),
     color= alt.Color('cbsa:O', scale=alt.Scale(scheme='category10'), legend=alt.Legend(title='CBSA Name', labelLimit=1000)),  
-    opacity=alt.value(0.8))
+    opacity=alt.value(0.7))
 
-legend_line = legend_base.mark_line().encode(
+legend_line = legend_base.mark_line(strokeWidth=1.5).encode(
     y=alt.Y('admits_100k', title=None),
     tooltip=['cbsa','report_date','hosp_timerange','admits_100k','total_population_2019'],
 ).transform_filter(select_cbsa)
 
-legend_points = legend_line.mark_point(shape='circle', filled=True, size=50
+legend_points = legend_line.mark_point(shape='circle', filled=True, size=30
 ).properties(title='Weekly New Admissions per 100k').transform_filter(select_date).add_selection(select_cbsa)
 
-legend_abs_line = legend_base.mark_line().encode(
+legend_abs_line = legend_base.mark_line(strokeWidth=1.5).encode(
     y=alt.Y('admissions_covid_confirmed_last_7_days', title=None),
     tooltip=['cbsa','report_date','hosp_timerange','admissions_covid_confirmed_last_7_days','total_population_2019'],
 ).transform_filter(select_cbsa)
 
-legend_abs_points = legend_abs_line.mark_point(shape='circle', filled=True, size=50
+legend_abs_points = legend_abs_line.mark_point(shape='circle', filled=True, size=30
 ).properties(title='Weekly New Admissions').transform_filter(select_date).add_selection(select_cbsa)
 
 # map plot
