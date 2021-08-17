@@ -22,16 +22,19 @@ def _max_width_():
 
 _max_width_()
 
-@st.cache
+@st.cache(suppress_st_warning=True)
 def get_data(): 
+    print('getdata cache miss')
     return pd.read_csv('cbsa_timeseries_cpr_slim.csv', parse_dates=['report_date'])
 
-@st.cache
+@st.cache(suppress_st_warning=True)
 def get_states_shapes():
+    print('getstateshapes cache miss')
     return alt.topo_feature('https://cdn.jsdelivr.net/npm/vega-datasets@v1.29.0/data/us-10m.json', 'states')
 
-@st.cache
+@st.cache(ttl=60*60*24, suppress_st_warning=True)
 def make_source_df(cbsa_merged):
+    print('sourcedf cache miss')
     source = cbsa_merged[['cbsa','cbsa_short','report_date',
         'admissions_covid_confirmed_last_7_days','admits_100k',
         'state','lat','lon', 'total_population_2019','hosp_timerange']]
@@ -46,10 +49,18 @@ def make_source_df(cbsa_merged):
     source.loc[source['cbsa']=='Bluffton, IN', 'lon'] = bluffton_lon
     return source
 
-cbsa_merged = get_data()
-states_altair = get_states_shapes()
-source = make_source_df(cbsa_merged)
+@st.cache(suppress_st_warning=True)
+def make_basemap():
+    print('basemap cache miss')
+    states_altair = get_states_shapes()
+    return alt.Chart(states_altair).mark_geoshape(
+            fill=None,
+            stroke='gray',
+            strokeWidth=0.5,
+        ).project('albersUsa')
 
+cbsa_merged = get_data()
+source = make_source_df(cbsa_merged)
 states_list = ['All USA']+sorted(source['state'].unique())
 
 # Sidebar stuff
@@ -71,22 +82,18 @@ st.sidebar.markdown(
     Data wrangling and visualizations by Dave Luo.
     """
 )
+if selected_states != 'All USA': source = source[source['state']==selected_states]
 # default cbsas to display
-if selected_states != 'All USA': 
-    source = source[source['state']==selected_states]
-    cbsa_init = [{'cbsa':c} for c in source[(source['report_date']==source['report_date'].max())\
-                                            ].sort_values('admissions_covid_confirmed_last_7_days', ascending=False)['cbsa'].values[:6]]
-else: 
-    cbsa_init = [{'cbsa':c} for c in source[(source['report_date']==source['report_date'].max())\
-                                            &(source['admissions_covid_confirmed_last_7_days']>1000)\
-                                            ].sort_values('admissions_covid_confirmed_last_7_days', ascending=False)['cbsa'].values[:10]]
+cbsa_init = [{'cbsa':c} for c in source[(source['report_date']==source['report_date'].max())\
+                                        ].sort_values('admissions_covid_confirmed_last_7_days', ascending=False)['cbsa'].values[:10]]
 
 @st.cache
 def get_counties_shapes():
     return alt.topo_feature('https://cdn.jsdelivr.net/npm/vega-datasets@v1.29.0/data/us-10m.json', 'counties')
 
-@st.cache
+@st.cache(suppress_st_warning=True)
 def get_cbsa_shapes():
+    st.write('getcbsa cache miss')
     return alt.topo_feature('https://raw.githubusercontent.com/daveluo/covid-metro-explorer/main/cbsa_shapes.json', 'cbsa_shapes')
 
 state_codes = {
@@ -103,65 +110,56 @@ state_codes = {
 }
 
 # selections
-select_cbsa = alt.selection_multi(name='cbsa', empty='none', nearest=True, fields=['cbsa'], init=cbsa_init)
+if selected_states != 'All USA': empty_default = 'all'
+else: empty_default = 'none'
+
+select_cbsa = alt.selection_multi(name='cbsa', empty=empty_default, nearest=True, fields=['cbsa'], init=cbsa_init)
 slider = alt.binding_range(min=0, max=source['timeslider'].max(), step=1, name=' ')
 select_date = alt.selection_single(name="timeslide", fields=['timeslider'], bind=slider, init={'timeslider':source['timeslider'].max()})
 
 # line plots
 legend_base = alt.Chart(source).encode(
     x=alt.X('report_date:T', axis=alt.Axis(orient='bottom',title='',labelAngle=0,), sort=alt.SortOrder('ascending'),),
-    color= alt.condition(select_date, alt.Color('cbsa:O', scale=alt.Scale(scheme='category10')), alt.value('lightgray')),  
-)
+    color= alt.Color('cbsa:O', scale=alt.Scale(scheme='category10'), legend=alt.Legend(title='CBSA Name', labelLimit=1000)),  
+    opacity=alt.value(0.8))
 
-legend_points = legend_base.mark_point(shape='circle', filled=True, size=50, opacity=0.8).encode(
+legend_line = legend_base.mark_line().encode(
     y=alt.Y('admits_100k', title=None),
     tooltip=['cbsa','report_date','hosp_timerange','admits_100k','total_population_2019'],
-    opacity = alt.condition(select_date, alt.value(0.8), alt.value(0.)),
-).transform_filter(select_date
 ).transform_filter(select_cbsa)
 
-legend_line = legend_base.mark_line().transform_filter(select_cbsa).encode(
-    y=alt.Y('admits_100k', title=None),
-    color= alt.Color('cbsa:O', scale=alt.Scale(scheme='category10'), legend=alt.Legend(title='CBSA Name', labelLimit=1000)),  
-).transform_filter(select_cbsa).properties(title='Weekly New Admissions per 100k')
+legend_points = legend_line.mark_point(shape='circle', filled=True, size=50
+).properties(title='Weekly New Admissions per 100k').transform_filter(select_date).add_selection(select_cbsa)
 
-legend_abs_points = legend_base.mark_point(shape='circle', filled=True, size=50, opacity=0.8).encode(
+legend_abs_line = legend_base.mark_line().encode(
     y=alt.Y('admissions_covid_confirmed_last_7_days', title=None),
     tooltip=['cbsa','report_date','hosp_timerange','admissions_covid_confirmed_last_7_days','total_population_2019'],
-    opacity = alt.condition(select_date, alt.value(0.8), alt.value(0.)),
-).transform_filter(select_date
 ).transform_filter(select_cbsa)
 
-legend_abs_line = legend_base.mark_line().transform_filter(select_cbsa).encode(
-    y=alt.Y('admissions_covid_confirmed_last_7_days', title=None),
-    color= alt.Color('cbsa:O', scale=alt.Scale(scheme='category10'), legend=None)#alt.Legend(title='CBSA Name', labelLimit=1000)),  
-).transform_filter(select_cbsa).properties(title='Weekly New Admissions')
+legend_abs_points = legend_abs_line.mark_point(shape='circle', filled=True, size=50
+).properties(title='Weekly New Admissions').transform_filter(select_date).add_selection(select_cbsa)
 
 # map plot
-map_background = alt.Chart(states_altair).mark_geoshape(
-    fill=None,
-    stroke='gray',
-    strokeWidth=0.5,
-).project('albersUsa')
+map_background = make_basemap()
 
 map_facility_base = alt.Chart(source).mark_point(filled=True).encode(
     longitude='lon',
     latitude='lat',
     color = alt.Color('admits_100k:Q', 
-                    legend=alt.Legend(orient='none', legendX=325, legendY=470, direction='horizontal', titleLimit=500, format='.0f'),
+                    legend=alt.Legend(orient='none', legendX=380, legendY=570, direction='horizontal', titleLimit=500, format='.0f'),
                     title='Weekly Admissions per 100k',
-                    scale=alt.Scale(scheme='redyellowblue', domain=[0,50], type='quantile', reverse=True, clamp=True),
+                    scale=alt.Scale(scheme='redyellowblue', domain=[0,75], type='quantile', reverse=True, clamp=True),
                     ), 
     size= alt.Size('admissions_covid_confirmed_last_7_days:Q', 
                     title=['Weekly Admissions'],
-                    legend=alt.Legend(orient='none', legendX=660, legendY=470, direction='horizontal', titleLimit=500), scale=alt.Scale(domain=[0,2000], range=[10,500])
+                    legend=alt.Legend(orient='none', legendX=620, legendY=570, direction='horizontal', titleLimit=500), scale=alt.Scale(domain=[0,2000], range=[10,500])
                     ),
     stroke=alt.condition(select_cbsa, alt.value('black'), alt.value('#111111')),
     strokeWidth=alt.condition(select_cbsa, alt.value(1.5), alt.value(0.5)),
     tooltip=['cbsa','report_date','hosp_timerange','total_population_2019','admissions_covid_confirmed_last_7_days','admits_100k',],
 ).transform_filter(alt.datum.state!='PR').add_selection(select_cbsa).add_selection(select_date).transform_filter(select_date)
 
-date_display = alt.Chart(source).mark_text(dy=250, dx=-250, size=18, stroke='white', strokeWidth=0.3).encode(
+date_display = alt.Chart(source).mark_text(dy=300, dx=-260, size=24, stroke='white', strokeWidth=0.3).encode(
     text='hosp_timerange:N'
 ).transform_filter(select_date).transform_filter(alt.datum.cbsa==cbsa_init[0]['cbsa'])
 
@@ -190,11 +188,11 @@ else:
     viz_concat = (map_background+map_facility_base+date_display+map_text)
 
 maptime_viz = alt.vconcat(viz_concat.properties(
-                        height=450, width=750), 
-                        (legend_line+legend_points).interactive(bind_x=False).properties(width=300, height=250,)|
-                        (legend_abs_line+legend_abs_points).interactive(bind_x=False).properties(width=300, height=250,)
+                        title=['',f'{selected_states} Metro Areas - New COVID-19 Hospital Admissions per Week'],
+                        height=550, width=900),
+                        (legend_line+legend_points).interactive().properties(width=250, height=250,)|
+                        (legend_abs_line+legend_abs_points).interactive().properties(width=250, height=250,)
                         ).properties( 
-                            title=[f'{selected_states} Metro Areas - New COVID-19 Hospital Admission Trends by Week'],
                             center=True,
                         ).configure_axis(
                             labelFontSize=14,
@@ -215,7 +213,7 @@ st.markdown(f"""
         form.vega-bindings {{
             position: absolute;
             left: 30px;
-            top: 510px;
+            top: 630px;
             font-family: 'arial';
         }}
         form.vega-bindings input {{
@@ -230,9 +228,9 @@ st.markdown(f"""
     """,
     unsafe_allow_html=True,
 )
-st.header('See Map and Time Trends')
+# st.header('See Map and Time Trends')
 
-st.altair_chart(maptime_viz)
+st.altair_chart(maptime_viz, use_container_width=False)
 
 st.info("""
     Use slider to update map visualization through time. Click points on map to select metros for timeseries plots (shift-click to select multiple, double-click to clear selection). Click "..." circle icon on top-right to save visualization as SVG or PNG. Explore/export data as tables and see sources in bottom section.
