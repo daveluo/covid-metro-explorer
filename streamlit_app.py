@@ -23,31 +23,14 @@ def _max_width_():
 _max_width_()
 
 @st.cache(suppress_st_warning=True)
-def get_data(): 
-    print('getdata cache miss')
-    return pd.read_csv('cbsa_timeseries_cpr_slim.csv', parse_dates=['report_date'])
-
-@st.cache(suppress_st_warning=True)
 def get_states_shapes():
     print('getstateshapes cache miss')
     return alt.topo_feature('https://cdn.jsdelivr.net/npm/vega-datasets@v1.29.0/data/us-10m.json', 'states')
 
 @st.cache(ttl=60*60*24, suppress_st_warning=True)
-def make_source_df(cbsa_merged):
-    print('sourcedf cache miss')
-    source = cbsa_merged[['cbsa','cbsa_short','report_date',
-        'admissions_covid_confirmed_last_7_days','admits_100k',
-        'state','lat','lon', 'total_population_2019','hosp_timerange']]
-
-    timeslider_dict = {k:i for i,k in enumerate(sorted(source['report_date'].astype('str').unique()))}
-    source['timeslider'] = source['report_date'].astype('str').apply(lambda x: int(timeslider_dict[x]))
-    source['hosp_timerange'] = source['hosp_timerange'].apply(lambda x: x.split('(')[-1].split(')')[0])
-    
-    # manually add a missing CBSA point
-    bluffton_lat, bluffton_lon = 40.738638307693904, -85.17187672851077
-    source.loc[source['cbsa']=='Bluffton, IN', 'lat'] = bluffton_lat
-    source.loc[source['cbsa']=='Bluffton, IN', 'lon'] = bluffton_lon
-    return source
+def get_source():
+    print('getsource cache miss')
+    return pd.read_csv('cbsa_timeseries.csv', parse_dates=['report_date'])
 
 @st.cache(suppress_st_warning=True)
 def make_basemap():
@@ -59,8 +42,7 @@ def make_basemap():
             strokeWidth=0.5,
         ).project('albersUsa')
 
-cbsa_merged = get_data()
-source = make_source_df(cbsa_merged)
+source = get_source()
 states_list = ['All USA']+sorted(source['state'].unique())
 
 # Sidebar stuff
@@ -152,14 +134,14 @@ map_facility_base = alt.Chart(source).mark_point(filled=True).encode(
                     ), 
     size= alt.Size('admissions_covid_confirmed_last_7_days:Q', 
                     title=['Weekly Admissions'],
-                    legend=alt.Legend(orient='none', legendX=620, legendY=570, direction='horizontal', titleLimit=500), scale=alt.Scale(domain=[0,2000], range=[10,500])
+                    legend=alt.Legend(orient='none', legendX=620, legendY=570, direction='horizontal', titleLimit=500), scale=alt.Scale(domain=[0,2500], range=[10,500])
                     ),
     stroke=alt.condition(select_cbsa, alt.value('black'), alt.value('#111111')),
     strokeWidth=alt.condition(select_cbsa, alt.value(1.5), alt.value(0.5)),
     tooltip=['cbsa','report_date','hosp_timerange','total_population_2019','admissions_covid_confirmed_last_7_days','admits_100k',],
 ).transform_filter(alt.datum.state!='PR').add_selection(select_cbsa).add_selection(select_date).transform_filter(select_date)
 
-date_display = alt.Chart(source).mark_text(dy=300, dx=-260, size=24, stroke='white', strokeWidth=0.3).encode(
+date_display = alt.Chart(source).mark_text(dy=300, dx=-300, size=24, stroke='white', strokeWidth=0.3).encode(
     text='hosp_timerange:N'
 ).transform_filter(select_date).transform_filter(alt.datum.cbsa==cbsa_init[0]['cbsa'])
 
@@ -189,7 +171,7 @@ else:
 
 maptime_viz = alt.vconcat(viz_concat.properties(
                         title=['',f'{selected_states} Metro Areas - New COVID-19 Hospital Admissions per Week'],
-                        height=550, width=900),
+                        height=550, width=1000),
                         (legend_line+legend_points).interactive().properties(width=250, height=250,)|
                         (legend_abs_line+legend_abs_points).interactive().properties(width=250, height=250,)
                         ).properties( 
@@ -228,7 +210,7 @@ st.markdown(f"""
     """,
     unsafe_allow_html=True,
 )
-# st.header('See Map and Time Trends')
+st.header('Explore Map and Time Trends')
 
 st.altair_chart(maptime_viz, use_container_width=False)
 
@@ -254,7 +236,7 @@ with st.expander("See more visualization details"):
 
 cbsas = source['cbsa'].unique()
 
-st.header(f'Search and Explore Metro Area Data for {selected_states} as Table')
+st.header(f'See Metro Area Data for {selected_states} as Table')
 with st.form(key='my_form'):
     if selected_states != 'All USA':
         selected_cbsas = st.multiselect('Select Metro Area(s)', cbsas, default=cbsas)
