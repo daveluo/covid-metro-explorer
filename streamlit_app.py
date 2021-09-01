@@ -2,6 +2,8 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import base64
+import gc
+
 alt.data_transformers.disable_max_rows()
 
 st.set_page_config(page_title="COVID Metro Areas Explorer",layout='centered')
@@ -22,17 +24,17 @@ def _max_width_():
 
 _max_width_()
 
-@st.cache(suppress_st_warning=True)
+@st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
 def get_states_shapes():
     print('getstateshapes cache miss')
     return alt.topo_feature('https://cdn.jsdelivr.net/npm/vega-datasets@v1.29.0/data/us-10m.json', 'states')
 
-@st.cache(ttl=60*60*24, suppress_st_warning=True)
+@st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
 def get_source():
     print('getsource cache miss')
     return pd.read_csv('cbsa_timeseries.csv', parse_dates=['report_date'])
 
-@st.cache(suppress_st_warning=True)
+@st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
 def make_basemap():
     print('basemap cache miss')
     states_altair = get_states_shapes()
@@ -69,11 +71,11 @@ if selected_states != 'All USA': source = source[source['state']==selected_state
 cbsa_init = [{'cbsa':c} for c in source[(source['report_date']==source['report_date'].max())\
                                         ].sort_values('admissions_covid_confirmed_last_7_days', ascending=False)['cbsa'].values[:10]]
 
-@st.cache
+@st.cache(max_entries=10, ttl=3600)
 def get_counties_shapes():
     return alt.topo_feature('https://cdn.jsdelivr.net/npm/vega-datasets@v1.29.0/data/us-10m.json', 'counties')
 
-@st.cache(suppress_st_warning=True)
+@st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
 def get_cbsa_shapes():
     st.write('getcbsa cache miss')
     return alt.topo_feature('https://raw.githubusercontent.com/daveluo/covid-metro-explorer/main/cbsa_shapes.json', 'cbsa_shapes')
@@ -151,7 +153,7 @@ map_text = alt.Chart(source).mark_text(dy=-12, dx=0, size=12, opacity=1, color='
     text='cbsa_short'
 ).transform_filter(select_cbsa).transform_filter(select_date).transform_filter(alt.datum.state!='PR')
 
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True, max_entries=10, ttl=3600)
 def make_vizconcat(selected_states):
     print('vizconcat cache miss')
     if selected_states != 'All USA': 
@@ -295,3 +297,5 @@ with st.expander('Access Community Profile Report source data files'):
                         }, axis=1, inplace=True)
     source_df = source_df.to_html(escape=False, index=False)
     st.write(source_df, unsafe_allow_html=True)
+
+gc.collect()
