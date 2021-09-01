@@ -151,23 +151,29 @@ map_text = alt.Chart(source).mark_text(dy=-12, dx=0, size=12, opacity=1, color='
     text='cbsa_short'
 ).transform_filter(select_cbsa).transform_filter(select_date).transform_filter(alt.datum.state!='PR')
 
-# mapviz gen for state-level views
-if selected_states != 'All USA': 
-    cbsa_shapes = get_cbsa_shapes()
-    map_cbsa = alt.Chart(cbsa_shapes).mark_geoshape(
-        fill='#e5e5e5',
-        stroke='white',
-        strokeWidth=2,
-        strokeOpacity=1,
-    ).project('albersUsa').transform_calculate(state='datum.properties.state').transform_filter(alt.datum.state==selected_states)
-        
-    viz_concat = (map_cbsa+map_background.transform_filter(alt.datum.id == int(state_codes[selected_states]))      
-                        +map_facility_base.transform_filter(alt.datum.state==selected_states)
-                        +date_display.transform_filter(alt.datum.state==selected_states)
-                        +map_text.transform_filter(alt.datum.state==selected_states)
-                        )
-else: 
-    viz_concat = (map_background+map_facility_base+date_display+map_text)
+@st.cache(allow_output_mutation=True)
+def make_vizconcat(selected_states):
+    print('vizconcat cache miss')
+    if selected_states != 'All USA': 
+        cbsa_shapes = get_cbsa_shapes()
+        map_cbsa = alt.Chart(cbsa_shapes).mark_geoshape(
+            fill='#e5e5e5',
+            stroke='white',
+            strokeWidth=2,
+            strokeOpacity=1,
+        ).project('albersUsa').transform_calculate(state='datum.properties.state').transform_filter(alt.datum.state==selected_states)
+            
+        viz_concat = (map_cbsa+map_background.transform_filter(alt.datum.id == int(state_codes[selected_states]))      
+                            +map_facility_base.transform_filter(alt.datum.state==selected_states)
+                            +date_display.transform_filter(alt.datum.state==selected_states)
+                            +map_text.transform_filter(alt.datum.state==selected_states)
+                            )
+    else: 
+        viz_concat = (map_background+map_facility_base+date_display+map_text)
+    
+    return viz_concat
+
+viz_concat = make_vizconcat(selected_states)
 
 maptime_viz = alt.vconcat(viz_concat.properties(
                         title=['',f'{selected_states} Metro Areas - New COVID-19 Hospital Admissions per Week'],
