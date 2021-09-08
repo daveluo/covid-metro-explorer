@@ -56,14 +56,16 @@ with st.sidebar.form(key='select_state'):
 
 st.sidebar.markdown(
     """
-    Explore COVID-19 trends in all US metro areas defined as [Core-Based Statistical Areas](https://en.wikipedia.org/wiki/Core-based_statistical_area) (CBSAs). 
+    Explore COVID-19 trends in all US metro areas defined as [Core-Based Statistical Areas](https://en.wikipedia.org/wiki/Core-based_statistical_area) (CBSAs) 
     
     Metric shown:
     - Confirmed COVID-19 new hospital admissions (7-day totals and 7-day totals per 100k population) per week in 2021
         
     Data source: [COVID-19 Community Profile Reports](https://healthdata.gov/Health/COVID-19-Community-Profile-Report/gqxm-d9w9)
 
-    Data wrangling and visualizations by Dave Luo.
+    Updated each Monday (or Tuesday if Monday update is not available)
+
+    Data wrangling and visualizations by Dave Luo
     """
 )
 if selected_states != 'All USA': source = source[source['state']==selected_states]
