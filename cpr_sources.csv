@@ -1,5 +1,21 @@
 report_date,hosp_timerange,source_url
-2021-09-13,HOSPITAL UTILIZATION: LAST WEEK (September 5-11),https://www.healthdata.gov/api/views/gqxm-d9w9/files/8dd6af78-f8cb-4a9b-9d59-6ae7f3effc96?download=true&filename=Community_Profile_Report_20210913.xlsx
+2022-01-03,HOSPITAL UTILIZATION: LAST WEEK (December 26-January 1),https://www.healthdata.gov/api/views/gqxm-d9w9/files/4ca51394-4c2a-4e4d-a136-496dc27c5cc9?download=true&filename=Community_Profile_Report_20220103.xlsx
+2021-12-27,HOSPITAL UTILIZATION: LAST WEEK (December 19-25),https://www.healthdata.gov/api/views/gqxm-d9w9/files/1a546ae3-e2ff-4512-bf4f-c5b1fcd785aa?download=true&filename=Community_Profile_Report_20211227.xlsx
+2021-12-20,HOSPITAL UTILIZATION: LAST WEEK (December 12-18),https://www.healthdata.gov/api/views/gqxm-d9w9/files/97b4eaf3-d5af-4959-b743-016079a5f07b?download=true&filename=Community_Profile_Report_20211220.xlsx
+2021-12-13,HOSPITAL UTILIZATION: LAST WEEK (December 5-11),https://www.healthdata.gov/api/views/gqxm-d9w9/files/968b864b-a1cd-4bb7-9b38-5c42567afa1d?download=true&filename=Community_Profile_Report_20211213.xlsx
+2021-12-06,HOSPITAL UTILIZATION: LAST WEEK (November 28-December 4),https://www.healthdata.gov/api/views/gqxm-d9w9/files/3500da31-ec8e-4971-879d-07d43a2c10df?download=true&filename=Community_Profile_Report_20211206.xlsx
+2021-11-29,HOSPITAL UTILIZATION: LAST WEEK (November 21-27),https://www.healthdata.gov/api/views/gqxm-d9w9/files/cb269f3d-da45-41da-821b-250ca21e95ef?download=true&filename=Community_Profile_Report_20211129.xlsx
+2021-11-22,HOSPITAL UTILIZATION: LAST WEEK (November 14-20),https://www.healthdata.gov/api/views/gqxm-d9w9/files/8c9afa39-995f-49d9-8272-ab0a659d16f4?download=true&filename=Community_Profile_Report_20211122.xlsx
+2021-11-15,HOSPITAL UTILIZATION: LAST WEEK (November 7-13),https://www.healthdata.gov/api/views/gqxm-d9w9/files/ca5b8dbd-2beb-48ba-a105-9dfa6277eae7?download=true&filename=Community_Profile_Report_20211115.xlsx
+2021-11-08,HOSPITAL UTILIZATION: LAST WEEK (October 31-November 6),https://www.healthdata.gov/api/views/gqxm-d9w9/files/b03e7ea4-066e-44c0-b443-a428ef5ca21b?download=true&filename=Community_Profile_Report_20211108.xlsx
+2021-11-01,HOSPITAL UTILIZATION: LAST WEEK (October 24-30),https://www.healthdata.gov/api/views/gqxm-d9w9/files/f2b33e91-eedf-4336-aea3-7dd7cf1362ac?download=true&filename=Community_Profile_Report_20211101.xlsx
+2021-10-25,HOSPITAL UTILIZATION: LAST WEEK (October 17-23),https://www.healthdata.gov/api/views/gqxm-d9w9/files/096bff61-99e0-4360-8c3a-2c26974cefda?download=true&filename=Community_Profile_Report_20211025.xlsx
+2021-10-18,HOSPITAL UTILIZATION: LAST WEEK (October 10-16),https://www.healthdata.gov/api/views/gqxm-d9w9/files/8595ac2f-3519-48ba-b66d-d37d2f67f087?download=true&filename=Community_Profile_Report_20211018.xlsx
+2021-10-12,HOSPITAL UTILIZATION: LAST WEEK (October 4-10),https://www.healthdata.gov/api/views/gqxm-d9w9/files/c081b58e-9076-403f-a01f-e743045e2335?download=true&filename=Community_Profile_Report_20211012.xlsx
+2021-10-04,HOSPITAL UTILIZATION: LAST WEEK (September 26-October 2),https://www.healthdata.gov/api/views/gqxm-d9w9/files/f3e162c0-5c62-4b04-9209-d912995c17c1?download=true&filename=Community_Profile_Report_20211004.xlsx
+2021-09-27,HOSPITAL UTILIZATION: LAST WEEK (September 19-25),https://www.healthdata.gov/api/views/gqxm-d9w9/files/c0845bfc-dabd-4495-86d9-cf16cbde9b24?download=true&filename=Community_Profile_Report_20210927.xlsx
+2021-09-20,HOSPITAL UTILIZATION: LAST WEEK (September 12-18),https://www.healthdata.gov/api/views/gqxm-d9w9/files/067c683a-054c-4196-88ab-a906cabdf000?download=true&filename=Community_Profile_Report_20210920.xlsx
+2021-09-13,HOSPITAL UTILIZATION: LAST WEEK (September 5-11),https://www.healthdata.gov/api/views/gqxm-d9w9/files/705fd70b-386c-4acd-8c24-6d262d260031?download=true&filename=Community_Profile_Report_20210913.xlsx
 2021-09-07,HOSPITAL UTILIZATION: LAST WEEK (August 30-September 5),https://www.healthdata.gov/api/views/gqxm-d9w9/files/e8d42b9a-cf11-488a-aaf0-9e1dece0339c?download=true&filename=Community_Profile_Report_20210907.xlsx
 2021-08-30,HOSPITAL UTILIZATION: LAST WEEK (August 22-28),https://www.healthdata.gov/api/views/gqxm-d9w9/files/ae678f6b-ecd7-4ee7-bbe2-839a21ea3d94?download=true&filename=Community_Profile_Report_20210830_Public.xlsx
 2021-08-23,HOSPITAL UTILIZATION: LAST WEEK (August 15-21),https://www.healthdata.gov/api/views/gqxm-d9w9/files/66314a96-5517-4c34-9b19-ea042b89b2c6?download=true&filename=Community_Profile_Report_20210823.xlsx

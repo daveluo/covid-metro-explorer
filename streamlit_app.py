@@ -3,6 +3,7 @@ import streamlit as st
 import altair as alt
 import base64
 import gc
+import numpy as np
 
 alt.data_transformers.disable_max_rows()
 
@@ -26,13 +27,15 @@ _max_width_()
 
 @st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
 def get_states_shapes():
-    print('getstateshapes cache miss')
+    # print('getstateshapes cache miss')
     return alt.topo_feature('https://cdn.jsdelivr.net/npm/vega-datasets@v1.29.0/data/us-10m.json', 'states')
 
 @st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
 def get_source():
-    print('getsource cache miss')
-    df = pd.read_csv('cbsa_timeseries.csv', parse_dates=['report_date'], index_col=[0])
+    # print('getsource cache miss')
+    df = pd.read_csv('cbsa_timeseries_source.csv', parse_dates=['report_date'], index_col=[0])
+    df = df[~df['report_date'].isna()]
+    df = df[df['report_date']>'2021-01-11']
     new_dtypes = {'cbsa': 'string', 
                   'cbsa_short': 'string',
                   'admissions_covid_confirmed_last_7_days': float,
@@ -54,7 +57,7 @@ def make_basemap():
     states_altair = get_states_shapes()
     return alt.Chart(states_altair).mark_geoshape(
             fill=None,
-            stroke='gray',
+            stroke='lightgray',
             strokeWidth=0.5,
         ).project('albersUsa')
 
@@ -73,11 +76,11 @@ st.sidebar.markdown(
     Explore COVID-19 trends in all US metro areas defined as [Core-Based Statistical Areas](https://en.wikipedia.org/wiki/Core-based_statistical_area) (CBSAs) 
     
     Metric shown:
-    - Confirmed COVID-19 new hospital admissions (7-day totals and 7-day totals per 100k population) per week in 2021
+    - Confirmed COVID-19 new hospital admissions (7-day totals and 7-day totals per 100k population) per week in 2021-22
         
     Data source: [COVID-19 Community Profile Reports](https://healthdata.gov/Health/COVID-19-Community-Profile-Report/gqxm-d9w9)
 
-    Updated each Monday (or Tuesday if Monday update is not available)
+    Updated weekly with Monday report (or Tuesday report if Monday's is not available)
 
     Data wrangling and visualizations by Dave Luo
     """
@@ -93,7 +96,7 @@ cbsa_init = [{'cbsa':c} for c in source[(source['report_date']==source['report_d
 
 @st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
 def get_cbsa_shapes():
-    st.write('getcbsa cache miss')
+    # st.write('getcbsa cache miss')
     return alt.topo_feature('https://raw.githubusercontent.com/daveluo/covid-metro-explorer/main/cbsa_shapes.json', 'cbsa_shapes')
 
 state_codes = {
@@ -113,8 +116,9 @@ tooltip_default = [alt.Tooltip('cbsa', title='CBSA'),
              alt.Tooltip('report_date', title='Update date'),
              alt.Tooltip('hosp_timerange', title='Reporting range'),
              alt.Tooltip('admissions_covid_confirmed_last_7_days', title='Admissions'),
-             alt.Tooltip('admits_100k', title='Admissions per 100k'),
-             alt.Tooltip('total_population_2019', title='Population (2019 est)'),
+             alt.Tooltip('admits_100k', format='.1f', title='Admissions per 100k'),
+             alt.Tooltip('admits_pct_change', format='.0%', title='% change from last week')
+            #  alt.Tooltip('total_population_2019', title='Population (2019 est)'),
              ]
 
 # selections
@@ -122,12 +126,12 @@ if selected_states != 'All USA': empty_default = 'all'
 else: empty_default = 'none'
 
 select_cbsa = alt.selection_multi(name='cbsa', empty=empty_default, nearest=True, fields=['cbsa'], init=cbsa_init)
-slider = alt.binding_range(min=0, max=source['timeslider'].max(), step=1, name=' ')
+slider = alt.binding_range(min=1, max=source['timeslider'].max(), step=1, name=' ')
 select_date = alt.selection_single(name="timeslide", fields=['timeslider'], bind=slider, init={'timeslider':source['timeslider'].max()})
 
 # line plots
 legend_base = alt.Chart(source).encode(
-    x=alt.X('report_date:T', axis=alt.Axis(orient='bottom',title='',labelAngle=0,), sort=alt.SortOrder('ascending'),),
+    x=alt.X('report_date:T', axis=alt.Axis(orient='bottom',title='', format='%b-%Y', labelAngle=0,), sort=alt.SortOrder('ascending'),),
     color= alt.Color('cbsa:O', scale=alt.Scale(scheme='category10'), legend=alt.Legend(title='CBSA Name', labelLimit=1000)),  
     opacity=alt.value(0.7))
 
@@ -150,24 +154,37 @@ legend_abs_points = legend_abs_line.mark_point(shape='circle', filled=True, size
 # map plot
 map_background = make_basemap()
 
-map_facility_base = alt.Chart(source).mark_point(filled=True).encode(
+map_facility_points = alt.Chart(source).mark_point(filled=True, opacity=1, color='black', size=4).encode(
     longitude='lon',
     latitude='lat',
-    color = alt.Color('admits_100k:Q', 
-                    legend=alt.Legend(orient='none', legendX=380, legendY=570, direction='horizontal', titleLimit=500, format='.0f'),
-                    title='Weekly Admissions per 100k',
-                    scale=alt.Scale(scheme='redyellowblue', domain=[0,75], type='quantile', reverse=True, clamp=True),
+    
+).transform_filter(alt.datum.state!='PR').transform_filter(select_date)
+
+map_facility_base = alt.Chart(source).mark_point(filled=True, opacity=.8).encode(
+    longitude='lon',
+    latitude='lat',
+    tooltip=tooltip_default,
+    # shape=alt.Shape('svg_path', scale=None),
+    color = alt.Color('admits_pct_change:Q',
+                        legend=alt.Legend(title='% Change',format='.0%',
+                                        orient='none', legendX=950, legendY=340, direction='vertical', 
+                                        ), 
+                        scale=alt.Scale(scheme='redyellowblue', 
+                                        domain=[-0.5,-.25,0,.5,1.0,1.5],  
+                                        range=['#6f0075','#ff0000','#FFBF1A','#97D2F3','#428CD0'], 
+                                        type='quantile', reverse=True, clamp=True),
                     ), 
     size= alt.Size('admissions_covid_confirmed_last_7_days:Q', 
-                    title=['Weekly Admissions'],
-                    legend=alt.Legend(orient='none', legendX=620, legendY=570, direction='horizontal', titleLimit=500), scale=alt.Scale(domain=[0,2500], range=[10,500])
+                    title=['New COVID-19 Hospital Admissions per Week'],
+                    legend=alt.Legend(orient='none', legendX=620, legendY=560, direction='horizontal', titleLimit=500), 
+                    scale=alt.Scale(domain=[0,1400], range=[10,150])
                     ),
     stroke=alt.condition(select_cbsa, alt.value('black'), alt.value('#111111')),
-    strokeWidth=alt.condition(select_cbsa, alt.value(1.5), alt.value(0.5)),
-    tooltip=tooltip_default,
-).transform_filter(alt.datum.state!='PR').add_selection(select_cbsa).add_selection(select_date).transform_filter(select_date)
+    strokeWidth=alt.condition(select_cbsa, alt.value(1.0), alt.value(0.1)),
+    
+).transform_filter(alt.datum.state!='PR').add_selection(select_cbsa).add_selection(select_date).transform_filter(select_date).transform_filter(alt.datum.admissions_covid_confirmed_last_7_days>0)
 
-date_display = alt.Chart(source).mark_text(dy=300, dx=-300, size=24, stroke='white', strokeWidth=0.3).encode(
+date_display = alt.Chart(source).mark_text(dy=290, dx=-300, size=20).encode(
     text='hosp_timerange:N'
 ).transform_filter(select_date).transform_filter(alt.datum.cbsa==cbsa_init[0]['cbsa'])
 
@@ -188,11 +205,12 @@ if selected_states != 'All USA':
         
     viz_concat = (map_cbsa+map_background.transform_filter(alt.datum.id == int(state_codes[selected_states]))      
                         +map_facility_base.transform_filter(alt.datum.state==selected_states)
+                        +map_facility_points.transform_filter(alt.datum.state==selected_states)
                         +date_display.transform_filter(alt.datum.state==selected_states)
                         +map_text.transform_filter(alt.datum.state==selected_states)
                         )
 else: 
-    viz_concat = (map_background+map_facility_base+date_display+map_text)
+    viz_concat = (map_facility_points+map_background+map_facility_base+date_display+map_text)
 
 maptime_viz = alt.vconcat(viz_concat.properties(
                         title=['',f'{selected_states} Metro Areas - New COVID-19 Hospital Admissions per Week'],
@@ -219,8 +237,8 @@ st.markdown(f"""
 
         form.vega-bindings {{
             position: absolute;
-            left: 30px;
-            top: 630px;
+            left: 35px;
+            top: 610px;
             font-family: 'arial';
         }}
         form.vega-bindings input {{
@@ -247,15 +265,15 @@ with st.expander("See more visualization details"):
     """
     Data updated weekly with reporting date range displayed below map.
 
-    Bubble size is scaled to absolute 7-day-totals. Bubble color is scaled to 7-day-totals per capita (usually per 100k population).
+    Circle size is scaled to 7-day-totals. Circle color represents % change since last week.
     
     National-level map view shows state borders as dark lines. State-level map show CBSAs as light-grey-filled shapes.
 
     Puerto Rico (PR) data not shown on map but does appear in time line plots and table view.
 
-    Bubble locations on map represent an internal lat/lon coordinate for each CBSA shape as designated by US Census data [here](https://catalog.data.gov/dataset/tiger-line-shapefile-2019-nation-u-s-current-metropolitan-statistical-area-micropolitan-statist) and are NOT precise locations of metro areas. CBSA shapes can cross state borders and bubble centers may appear over water bodies (sorry WI and MI).
+    Circle locations on map represent a lat/lon coordinate internal to each CBSA shape as designated in US Census data [here](https://catalog.data.gov/dataset/tiger-line-shapefile-2019-nation-u-s-current-metropolitan-statistical-area-micropolitan-statist). They are approximate locations of metro areas. CBSA shapes may cross state borders and circle locations may appear over water bodies (i.e. in WI and MI).
 
-    Community Profile Report data represents weekly snapshots in time and are not backfilled or revised. Data anomalies and reporting errors may be seen here without correction as a result.
+    Community Profile Report data represents weekly snapshots in time and are not backfilled or revised. Uncorrected data anomalies and reporting errors may be seen as a result.
     """
     )
 
@@ -296,13 +314,16 @@ st.markdown("""
 - Focuses on recent COVID-19 outcomes in the last seven days and changes relative to the week prior
 - Provides additional contextual information at the county, CBSA, state and regional levels
 - Supports rapid visual interpretation of results with color thresholds*
-Data in this report may differ from data on state and local websites. This may be due to differences in how data were reported (e.g., date specimen obtained, or date reported for cases) or how the metrics are calculated. Historical data may be updated over time due to delayed reporting. Data presented here use standard metrics across all geographic levels in the United States. It facilitates the understanding of COVID-19 pandemic trends across the United States by using standardized data. The footnotes describe each data source and the methods used for calculating the metrics. For additional data for any particular locality, visit the relevant health department website. Additional data and features are forthcoming. 
 
->\*Color thresholds for each category are defined on the color thresholds tab
+>Data in this report may differ from data on state and local websites. This may be due to differences in how data were reported (e.g., date specimen obtained, or date reported for cases) or how the metrics are calculated. Historical data may be updated over time due to delayed reporting. Data presented here use standard metrics across all geographic levels in the United States. It facilitates the understanding of COVID-19 pandemic trends across the United States by using standardized data. The footnotes describe each data source and the methods used for calculating the metrics. For additional data for any particular locality, visit the relevant health department website. Additional data and features are forthcoming.
 
->Effective April 30, 2021, the Community Profile Report will be distributed on Monday through Friday. There will be no impact to the data represented in these reports due to this change  
+>*Color thresholds for each category are defined on the color thresholds tab
+
+>Effective April 30, 2021, the Community Profile Report will be distributed on Monday through Friday. There will be no impact to the data represented in these reports due to this change.
 
 >Effective June 22, 2021, the Community Profile Report will only be updated twice a week, on Tuesdays and Fridays.
+
+>Effective August 2, 2021, the Community Profile Report will return to being updated Monday through Friday.
 """
 )
 with st.expander('Access Community Profile Report source data files'):
