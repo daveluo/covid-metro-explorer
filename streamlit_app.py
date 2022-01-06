@@ -25,12 +25,12 @@ def _max_width_():
 
 _max_width_()
 
-@st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
+@st.cache(suppress_st_warning=True, max_entries=10)
 def get_states_shapes():
     # print('getstateshapes cache miss')
     return alt.topo_feature('https://cdn.jsdelivr.net/npm/vega-datasets@v1.29.0/data/us-10m.json', 'states')
 
-@st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
+@st.cache(suppress_st_warning=True, max_entries=10)
 def get_source():
     # print('getsource cache miss')
     df = pd.read_csv('cbsa_timeseries_source.csv', parse_dates=['report_date'], index_col=[0])
@@ -51,7 +51,7 @@ def get_source():
     # print(df.info())
     return df
 
-# @st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
+@st.cache(suppress_st_warning=True, max_entries=10)
 def make_basemap():
     # print('basemap cache miss')
     states_altair = get_states_shapes()
@@ -94,7 +94,7 @@ cbsa_init = [{'cbsa':c} for c in source[(source['report_date']==source['report_d
 # def get_counties_shapes():
 #     return alt.topo_feature('https://cdn.jsdelivr.net/npm/vega-datasets@v1.29.0/data/us-10m.json', 'counties')
 
-@st.cache(suppress_st_warning=True, max_entries=10, ttl=3600)
+@st.cache(suppress_st_warning=True, max_entries=10)
 def get_cbsa_shapes():
     # st.write('getcbsa cache miss')
     return alt.topo_feature('https://raw.githubusercontent.com/daveluo/covid-metro-explorer/main/cbsa_shapes.json', 'cbsa_shapes')
