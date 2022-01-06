@@ -125,14 +125,14 @@ tooltip_default = [alt.Tooltip('cbsa', title='CBSA'),
 if selected_states != 'All USA': empty_default = 'all'
 else: empty_default = 'none'
 
-select_cbsa = alt.selection_multi(name='cbsa', empty=empty_default, nearest=True, fields=['cbsa'], init=cbsa_init)
+select_cbsa = alt.selection_multi(name='cbsa', empty=empty_default, nearest=False, fields=['cbsa'], init=cbsa_init)
 slider = alt.binding_range(min=1, max=source['timeslider'].max(), step=1, name=' ')
 select_date = alt.selection_single(name="timeslide", fields=['timeslider'], bind=slider, init={'timeslider':source['timeslider'].max()})
 
 # line plots
 legend_base = alt.Chart(source).encode(
     x=alt.X('report_date:T', axis=alt.Axis(orient='bottom',title='', format='%b-%Y', labelAngle=0,), sort=alt.SortOrder('ascending'),),
-    color= alt.Color('cbsa:O', scale=alt.Scale(scheme='category10'), legend=alt.Legend(title='CBSA Name', labelLimit=1000)),  
+    color= alt.Color('cbsa:O', scale=alt.Scale(scheme='dark2'), legend=alt.Legend(title='CBSA Name', labelLimit=1000)),  
     opacity=alt.value(0.7))
 
 legend_line = legend_base.mark_line(strokeWidth=1.5).encode(
@@ -214,7 +214,7 @@ else:
 
 @st.cache(suppress_st_warning=True, allow_output_mutation=True, max_entries=10)
 def make_map(viz_concat, selected_states):
-    st.write("Cache miss: make_map ran")
+    # st.write("Cache miss: make_map ran")
     maptime_viz = alt.vconcat(viz_concat.properties(
                         title=['',f'{selected_states} Metro Areas - New COVID-19 Hospital Admissions per Week'],
                         height=550, width=1000),
