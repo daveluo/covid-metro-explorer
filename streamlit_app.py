@@ -170,8 +170,8 @@ map_facility_base = alt.Chart(source).mark_point(filled=True, opacity=.8).encode
                                         orient='none', legendX=950, legendY=340, direction='vertical', 
                                         ), 
                         scale=alt.Scale(scheme='redyellowblue', 
-                                        domain=[-0.5,-.25,0,.5,1.0,1.5],  
-                                        range=['#6f0075','#ff0000','#FFBF1A','#97D2F3','#428CD0'], 
+                                        domain=[-0.5,-.25,0,.5,1.0,2.0,3.0],  
+                                        range=['#6f0075','#ff0000','#ff8300','#FFBF1A','#97D2F3','#428CD0'], 
                                         type='quantile', reverse=True, clamp=True),
                     ), 
     size= alt.Size('admissions_covid_confirmed_last_7_days:Q', 
@@ -212,7 +212,10 @@ if selected_states != 'All USA':
 else: 
     viz_concat = (map_facility_points+map_background+map_facility_base+date_display+map_text)
 
-maptime_viz = alt.vconcat(viz_concat.properties(
+@st.cache(suppress_st_warning=True, allow_output_mutation=True, max_entries=10)
+def make_map(viz_concat, selected_states):
+    st.write("Cache miss: make_map ran")
+    maptime_viz = alt.vconcat(viz_concat.properties(
                         title=['',f'{selected_states} Metro Areas - New COVID-19 Hospital Admissions per Week'],
                         height=550, width=1000),
                         (legend_points+legend_line).interactive(bind_x=False).properties(width=250, height=250,)|
@@ -231,6 +234,10 @@ maptime_viz = alt.vconcat(viz_concat.properties(
                             titleFontSize=12,
                             labelFontSize=12
                         ).configure_view(strokeWidth=0)
+    
+    return maptime_viz
+
+maptime_viz = make_map(viz_concat, selected_states)
 
 st.markdown(f"""
     <style>
@@ -253,7 +260,7 @@ st.markdown(f"""
     """,
     unsafe_allow_html=True,
 )
-st.header('Explore Map and Time Trends')
+# st.header('Explore Map and Time Trends')
 
 st.altair_chart(maptime_viz, use_container_width=False)
 
@@ -288,7 +295,7 @@ with st.form(key='my_form'):
     submit_button = st.form_submit_button(label='Create Table')
 
 display_df = source[source['cbsa'].isin(selected_cbsas)]\
-    [['cbsa','report_date','hosp_timerange', 'admissions_covid_confirmed_last_7_days','admits_100k','total_population_2019', 'lat','lon']]
+    [['cbsa','report_date','hosp_timerange', 'admissions_covid_confirmed_last_7_days','admits_100k','admits_pct_change','total_population_2019', 'lat','lon']]
 display_df['report_date'] = display_df['report_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
 display_df.sort_values(['cbsa','report_date'], ascending=[True,False], inplace=True)
 st.dataframe(display_df)
