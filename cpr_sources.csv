@@ -1,4 +1,5 @@
 report_date,hosp_timerange,source_url
+2022-01-10,HOSPITAL UTILIZATION: LAST WEEK (January 2-8),https://www.healthdata.gov/api/views/gqxm-d9w9/files/8008748e-cbdd-4b13-bf41-ec36ca4772ee?download=true&filename=Community_Profile_Report_20220110.xlsx
 2022-01-03,HOSPITAL UTILIZATION: LAST WEEK (December 26-January 1),https://www.healthdata.gov/api/views/gqxm-d9w9/files/4ca51394-4c2a-4e4d-a136-496dc27c5cc9?download=true&filename=Community_Profile_Report_20220103.xlsx
 2021-12-27,HOSPITAL UTILIZATION: LAST WEEK (December 19-25),https://www.healthdata.gov/api/views/gqxm-d9w9/files/1a546ae3-e2ff-4512-bf4f-c5b1fcd785aa?download=true&filename=Community_Profile_Report_20211227.xlsx
 2021-12-20,HOSPITAL UTILIZATION: LAST WEEK (December 12-18),https://www.healthdata.gov/api/views/gqxm-d9w9/files/97b4eaf3-d5af-4959-b743-016079a5f07b?download=true&filename=Community_Profile_Report_20211220.xlsx

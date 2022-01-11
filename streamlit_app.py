@@ -154,7 +154,7 @@ legend_abs_points = legend_abs_line.mark_point(shape='circle', filled=True, size
 # map plot
 map_background = make_basemap()
 
-map_facility_points = alt.Chart(source).mark_point(filled=True, opacity=1, color='black', size=4).encode(
+map_facility_points = alt.Chart(source).mark_point(filled=True, opacity=1, color='black', size=2).encode(
     longitude='lon',
     latitude='lat',
     
@@ -177,7 +177,7 @@ map_facility_base = alt.Chart(source).mark_point(filled=True, opacity=.8).encode
     size= alt.Size('admissions_covid_confirmed_last_7_days:Q', 
                     title=['New COVID-19 Hospital Admissions per Week'],
                     legend=alt.Legend(orient='none', legendX=620, legendY=560, direction='horizontal', titleLimit=500), 
-                    scale=alt.Scale(domain=[0,1400], range=[10,150])
+                    scale=alt.Scale(domain=[0,2000], range=[15,150])
                     ),
     stroke=alt.condition(select_cbsa, alt.value('black'), alt.value('#111111')),
     strokeWidth=alt.condition(select_cbsa, alt.value(1.0), alt.value(0.1)),
